@@ -753,9 +753,32 @@
     window.addEventListener('hashchange', () => { if (importFromHash()) showView('course'); });
   }
 
+  // ---------- 앱 설치 ----------
+  let installEvt = null;
+  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  function setupInstall() {
+    const card = $('installCard'); const btn = $('btnInstall'); const txt = $('installText');
+    if (!card) return;
+    if (isStandalone()) { card.hidden = true; return; }
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); installEvt = e; card.hidden = false; btn.hidden = false;
+    });
+    on('btnInstall', 'click', async () => {
+      if (!installEvt) return;
+      installEvt.prompt();
+      try { const r = await installEvt.userChoice; if (r && r.outcome === 'accepted') { toast('설치했습니다. 홈 화면에서 열어 주세요.'); card.hidden = true; } } catch (e) { /* 무시 */ }
+      installEvt = null;
+    });
+    window.addEventListener('appinstalled', () => { card.hidden = true; toast('설치 완료'); });
+    if (isIOS) { card.hidden = false; btn.hidden = true; txt.textContent = '아이폰: 사파리에서 열고 아래 공유 버튼(네모에 화살표) → "홈 화면에 추가"를 누르세요.'; }
+    else if (isAndroid) { setTimeout(() => { if (!installEvt && card.hidden) { card.hidden = false; btn.hidden = true; txt.textContent = '크롬 메뉴(⋮) → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요.'; } }, 3000); }
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => { /* 설치 기능만 빠짐 */ }); }
+  }
+
   function init() {
     $('brand').textContent = CFG.APP_NAME || '스캔코스'; document.title = CFG.APP_NAME || '스캔코스';
     bind();
+    setupInstall();
     const imported = importFromHash();
     updateCounts();
     if (kakaoKey()) ensureKakao().catch(() => { /* 상태 표시로 알림 */ });
