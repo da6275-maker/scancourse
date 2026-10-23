@@ -1,7 +1,7 @@
 // config.js — 회사 공통 설정. 여기만 고치면 됩니다.
 window.APP_CONFIG = {
   // 카카오 개발자 사이트(developers.kakao.com) > 내 애플리케이션 > 앱 키 > "JavaScript 키"
-  KAKAO_JS_KEY: '',
+  KAKAO_JS_KEY: 'c4abb42764c977b9946eee578bf529e1',
 
   // 주소에 시/군이 빠져 있을 때 앞에 붙일 지역 (각자 설정에서 바꿀 수 있음)
   DEFAULT_REGION: '경기 포천시',
