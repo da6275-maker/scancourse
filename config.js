@@ -16,5 +16,5 @@ window.APP_CONFIG = {
   ROAD_ORDER: true,
 
   APP_NAME: '스캔코스',
-  VERSION: '1.0.1'
+  VERSION: '1.0.2'
 };

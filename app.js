@@ -716,37 +716,39 @@
   }
 
   // ---------- 이벤트 연결 ----------
+  // 요소가 없어도(캐시된 옛 화면 등) 나머지 버튼은 계속 동작하도록 개별로 감쌈
+  function on(id, evt, fn) { const el = $(id); if (el) el.addEventListener(evt, fn); }
   function bind() {
     document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => showView(b.dataset.view)));
-    $('btnSettings').addEventListener('click', () => showView('settings'));
-    $('btnCloseSettings').addEventListener('click', () => showView(state.order.length ? 'course' : state.stops.length ? 'review' : 'scan'));
-    $('btnSaveSettings').addEventListener('click', saveSettingsFromForm);
-    $('btnHomeFind').addEventListener('click', findHome);
-    $('btnDictReset').addEventListener('click', () => { dict = new Set(SEED_DICT); saveDict(); $('dictCount').textContent = dict.size; toast('지명 사전을 기본값으로 되돌렸습니다'); });
-    $('fileCamera').addEventListener('change', (e) => scanFiles(Array.from(e.target.files || [])));
-    $('fileGallery').addEventListener('change', (e) => scanFiles(Array.from(e.target.files || [])));
-    $('btnCancelOcr').addEventListener('click', () => { ocrCancel = true; toast('취소하는 중…'); });
-    $('btnManual').addEventListener('click', () => { $('manualCard').hidden = false; $('manualText').focus(); });
-    $('btnManualClose').addEventListener('click', () => { $('manualCard').hidden = true; });
-    $('btnManualAdd').addEventListener('click', addManual);
-    $('btnResume').addEventListener('click', () => showView('course'));
-    $('btnResumeList').addEventListener('click', () => showView('review'));
-    $('rows').addEventListener('click', onRowsClick); $('rows').addEventListener('change', onRowsInput);
-    $('excludedRows').addEventListener('click', onRowsClick);
-    $('btnAddRow').addEventListener('click', () => { state.stops.push({ id: uid(), text: '', addr: '', name: '', note: '', status: 'pending', done: false, lat: null, lng: null, found: '', thumb: '' }); saveState(); renderRows(); const last = $('rows').lastElementChild; if (last) last.querySelector('.addr').focus(); });
-    $('btnScanMore').addEventListener('click', () => showView('scan'));
-    $('btnClearRows').addEventListener('click', () => resetAll('review'));
-    $('btnResetScan').addEventListener('click', () => resetAll('scan'));
+    on('btnSettings', 'click', () => showView('settings'));
+    on('btnCloseSettings', 'click', () => showView(state.order.length ? 'course' : state.stops.length ? 'review' : 'scan'));
+    on('btnSaveSettings', 'click', saveSettingsFromForm);
+    on('btnHomeFind', 'click', findHome);
+    on('btnDictReset', 'click', () => { dict = new Set(SEED_DICT); saveDict(); $('dictCount').textContent = dict.size; toast('지명 사전을 기본값으로 되돌렸습니다'); });
+    on('fileCamera', 'change', (e) => scanFiles(Array.from(e.target.files || [])));
+    on('fileGallery', 'change', (e) => scanFiles(Array.from(e.target.files || [])));
+    on('btnCancelOcr', 'click', () => { ocrCancel = true; toast('취소하는 중…'); });
+    on('btnManual', 'click', () => { $('manualCard').hidden = false; $('manualText').focus(); });
+    on('btnManualClose', 'click', () => { $('manualCard').hidden = true; });
+    on('btnManualAdd', 'click', addManual);
+    on('btnResume', 'click', () => showView('course'));
+    on('btnResumeList', 'click', () => showView('review'));
+    on('rows', 'click', onRowsClick); on('rows', 'change', onRowsInput);
+    on('excludedRows', 'click', onRowsClick);
+    on('btnAddRow', 'click', () => { state.stops.push({ id: uid(), text: '', addr: '', name: '', note: '', status: 'pending', done: false, lat: null, lng: null, found: '', thumb: '' }); saveState(); renderRows(); const last = $('rows').lastElementChild; if (last) last.querySelector('.addr').focus(); });
+    on('btnScanMore', 'click', () => showView('scan'));
+    on('btnClearRows', 'click', () => resetAll('review'));
+    on('btnResetScan', 'click', () => resetAll('scan'));
     document.querySelectorAll('#startSeg button').forEach((b) => b.addEventListener('click', () => { state.start = { type: b.dataset.start }; saveState(); renderStartSeg(); }));
-    $('btnBuild').addEventListener('click', buildCourse);
-    $('stops').addEventListener('click', onStopsClick);
-    $('btnNextNav').addEventListener('click', () => { const nx = nextStop(); if (nx) openNav(settings.nav || CFG.DEFAULT_NAV || 'naver', nx); });
-    $('btnReorder').addEventListener('click', async () => { if (!state.stops.some((s) => s.status === 'ok')) { toast('먼저 목록에서 순서를 만들어 주세요'); return; } toast('순서 다시 계산 중…'); try { await ensureKakao(); } catch (e) { /* 출발지 좌표가 이미 있으면 진행 */ } await computeOrder(); renderCourse(); });
-    $('btnShare').addEventListener('click', shareLink);
-    $('btnNewCourse').addEventListener('click', () => resetAll('scan'));
-    $('sheetClose').addEventListener('click', closeSheet);
-    $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) closeSheet(); });
-    $('sheetDone').addEventListener('click', () => { if (!sheetStop) return; sheetStop.done = !sheetStop.done; saveState(); closeSheet(); renderCourse(); });
+    on('btnBuild', 'click', buildCourse);
+    on('stops', 'click', onStopsClick);
+    on('btnNextNav', 'click', () => { const nx = nextStop(); if (nx) openNav(settings.nav || CFG.DEFAULT_NAV || 'naver', nx); });
+    on('btnReorder', 'click', async () => { if (!state.stops.some((s) => s.status === 'ok')) { toast('먼저 목록에서 순서를 만들어 주세요'); return; } toast('순서 다시 계산 중…'); try { await ensureKakao(); } catch (e) { /* 출발지 좌표가 이미 있으면 진행 */ } await computeOrder(); renderCourse(); });
+    on('btnShare', 'click', shareLink);
+    on('btnNewCourse', 'click', () => resetAll('scan'));
+    on('sheetClose', 'click', closeSheet);
+    on('sheet', 'click', (e) => { if (e.target === $('sheet')) closeSheet(); });
+    on('sheetDone', 'click', () => { if (!sheetStop) return; sheetStop.done = !sheetStop.done; saveState(); closeSheet(); renderCourse(); });
     document.querySelectorAll('.navgrid button[data-nav]').forEach((b) => b.addEventListener('click', () => { if (sheetStop) openNav(b.dataset.nav, sheetStop); }));
     window.addEventListener('hashchange', () => { if (importFromHash()) showView('course'); });
   }
