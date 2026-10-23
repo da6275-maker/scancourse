@@ -704,6 +704,17 @@
     $('btnResume').hidden = !list.length;
   }
 
+  // 초기화: 주소 목록·코스·완료 표시 전부 지움 (설정과 지명 사전은 유지)
+  function resetAll(nextView) {
+    const has = state.stops.length || state.order.length || state.excluded.length;
+    if (has && !window.confirm('주소 목록과 코스를 전부 지우고 처음부터 시작할까요?')) return;
+    state.stops = []; state.excluded = []; state.order = []; state.route = null; state.builtAt = null;
+    saveState(); updateCounts();
+    if (map) { for (const o of overlays) o.setMap(null); overlays = []; if (polyline) { polyline.setMap(null); polyline = null; } }
+    toast('초기화했습니다');
+    showView(nextView === 'review' ? 'review' : 'scan');
+  }
+
   // ---------- 이벤트 연결 ----------
   function bind() {
     document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => showView(b.dataset.view)));
@@ -724,14 +735,15 @@
     $('excludedRows').addEventListener('click', onRowsClick);
     $('btnAddRow').addEventListener('click', () => { state.stops.push({ id: uid(), text: '', addr: '', name: '', note: '', status: 'pending', done: false, lat: null, lng: null, found: '', thumb: '' }); saveState(); renderRows(); const last = $('rows').lastElementChild; if (last) last.querySelector('.addr').focus(); });
     $('btnScanMore').addEventListener('click', () => showView('scan'));
-    $('btnClearRows').addEventListener('click', () => { if (!state.stops.length || window.confirm('주소 목록을 전부 지울까요?')) { state.stops = []; state.excluded = []; state.order = []; state.route = null; saveState(); renderRows(); } });
+    $('btnClearRows').addEventListener('click', () => resetAll('review'));
+    $('btnResetScan').addEventListener('click', () => resetAll('scan'));
     document.querySelectorAll('#startSeg button').forEach((b) => b.addEventListener('click', () => { state.start = { type: b.dataset.start }; saveState(); renderStartSeg(); }));
     $('btnBuild').addEventListener('click', buildCourse);
     $('stops').addEventListener('click', onStopsClick);
     $('btnNextNav').addEventListener('click', () => { const nx = nextStop(); if (nx) openNav(settings.nav || CFG.DEFAULT_NAV || 'naver', nx); });
     $('btnReorder').addEventListener('click', async () => { if (!state.stops.some((s) => s.status === 'ok')) { toast('먼저 목록에서 순서를 만들어 주세요'); return; } toast('순서 다시 계산 중…'); try { await ensureKakao(); } catch (e) { /* 출발지 좌표가 이미 있으면 진행 */ } await computeOrder(); renderCourse(); });
     $('btnShare').addEventListener('click', shareLink);
-    $('btnNewCourse').addEventListener('click', () => { if (window.confirm('새 코스를 시작할까요? 지금 코스와 목록이 지워집니다.')) { state.stops = []; state.excluded = []; state.order = []; state.route = null; saveState(); updateCounts(); showView('scan'); } });
+    $('btnNewCourse').addEventListener('click', () => resetAll('scan'));
     $('sheetClose').addEventListener('click', closeSheet);
     $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) closeSheet(); });
     $('sheetDone').addEventListener('click', () => { if (!sheetStop) return; sheetStop.done = !sheetStop.done; saveState(); closeSheet(); renderCourse(); });
