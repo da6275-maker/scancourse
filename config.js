@@ -9,6 +9,9 @@ window.APP_CONFIG = {
   // 기본 출발지 주소 (예: 회사 주소). 비워 두면 각자 설정에서 입력
   DEFAULT_HOME: '',
 
+  // '내비 시작' 버튼이 여는 기본 앱: naver | kakaonavi | kakaomap | tmap (각자 설정에서 바꿀 수 있음)
+  DEFAULT_NAV: 'naver',
+
   // 도로 기준으로 순서 계산 (공개 경로 서버 사용, 실패하면 직선거리로 계산)
   ROAD_ORDER: true,
 

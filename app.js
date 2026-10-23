@@ -31,7 +31,7 @@
 
   let settings = Object.assign({
     home: CFG.DEFAULT_HOME || '', homeLat: null, homeLng: null, homeFound: '',
-    region: CFG.DEFAULT_REGION || '', nav: 'kakaonavi', road: CFG.ROAD_ORDER !== false, key: '',
+    region: CFG.DEFAULT_REGION || '', nav: CFG.DEFAULT_NAV || 'naver', road: CFG.ROAD_ORDER !== false, key: '',
   }, lsGet(LS.settings, {}));
 
   let state = Object.assign({ stops: [], excluded: [], order: [], start: { type: 'home' }, route: null, builtAt: null }, lsGet(LS.state, {}));
@@ -70,7 +70,7 @@
     $('setHome').value = settings.home || '';
     $('homeFound').textContent = settings.homeFound ? '찾음: ' + settings.homeFound : (settings.home ? '아직 좌표를 못 찾았습니다. 찾기를 눌러 주세요.' : '');
     $('setRegion').value = settings.region || '';
-    $('setNav').value = settings.nav || 'kakaonavi';
+    $('setNav').value = settings.nav || CFG.DEFAULT_NAV || 'naver';
     $('setRoad').checked = !!settings.road;
     $('setKey').value = settings.key || '';
     $('originCode').textContent = location.origin;
@@ -615,7 +615,7 @@
     sheetStop = s; const list = orderedStops(); const no = list.indexOf(s) + 1;
     $('sheetNo').textContent = no || '·'; $('sheetTitle').textContent = (s.name ? s.name + ' · ' : '') + s.addr; $('sheetAddr').textContent = s.found || '';
     $('sheetDone').textContent = s.done ? '되돌리기' : '완료 표시';
-    document.querySelectorAll('.navgrid button[data-nav]').forEach((b) => b.classList.toggle('primary', b.dataset.nav === (settings.nav || 'kakaonavi')));
+    document.querySelectorAll('.navgrid button[data-nav]').forEach((b) => b.classList.toggle('primary', b.dataset.nav === (settings.nav || CFG.DEFAULT_NAV || 'naver')));
     $('sheet').hidden = false;
   }
   function closeSheet() { $('sheet').hidden = true; sheetStop = null; }
@@ -728,7 +728,7 @@
     document.querySelectorAll('#startSeg button').forEach((b) => b.addEventListener('click', () => { state.start = { type: b.dataset.start }; saveState(); renderStartSeg(); }));
     $('btnBuild').addEventListener('click', buildCourse);
     $('stops').addEventListener('click', onStopsClick);
-    $('btnNextNav').addEventListener('click', () => { const nx = nextStop(); if (nx) openNav(settings.nav || 'kakaonavi', nx); });
+    $('btnNextNav').addEventListener('click', () => { const nx = nextStop(); if (nx) openNav(settings.nav || CFG.DEFAULT_NAV || 'naver', nx); });
     $('btnReorder').addEventListener('click', async () => { if (!state.stops.some((s) => s.status === 'ok')) { toast('먼저 목록에서 순서를 만들어 주세요'); return; } toast('순서 다시 계산 중…'); try { await ensureKakao(); } catch (e) { /* 출발지 좌표가 이미 있으면 진행 */ } await computeOrder(); renderCourse(); });
     $('btnShare').addEventListener('click', shareLink);
     $('btnNewCourse').addEventListener('click', () => { if (window.confirm('새 코스를 시작할까요? 지금 코스와 목록이 지워집니다.')) { state.stops = []; state.excluded = []; state.order = []; state.route = null; saveState(); updateCounts(); showView('scan'); } });
