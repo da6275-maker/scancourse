@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b6e5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>스캔코스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  /* 레이아웃: 상단 고정 바 + 한 화면씩 전환되는 작업 흐름(스캔 → 목록 → 코스). 현장에서 한 손으로 쓰는 도구라 큰 버튼, 높은 대비. */
+  :root {
+    --bg: #f2f4f1;
+    --panel: #ffffff;
+    --fg: #15201d;
+    --muted: #5d6b66;
+    --line: #d6dcd8;
+    --soft: #e4eeea;
+    --accent: #0b6e5c;
+    --accent-fg: #ffffff;
+    --next: #c96f12;
+    --next-soft: #fff1df;
+    --bad: #b3261e;
+    --bad-soft: #fde7e5;
+    --ok: #1f7a3e;
+    --ok-soft: #e3f3e8;
+    --shadow: 0 1px 2px rgba(20, 30, 27, .08), 0 4px 14px rgba(20, 30, 27, .06);
+    --radius: 12px;
+    --font: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1513; --panel: #182019; --fg: #eef2ef; --muted: #9fb0a9; --line: #2b3732; --soft: #1f2b26;
+      --accent: #3fc3a1; --accent-fg: #06211b; --next: #f0a74a; --next-soft: #3a2a12; --bad: #ff7b72; --bad-soft: #3d1c1a;
+      --ok: #5bd38a; --ok-soft: #173321; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1513; --panel: #182019; --fg: #eef2ef; --muted: #9fb0a9; --line: #2b3732; --soft: #1f2b26;
+    --accent: #3fc3a1; --accent-fg: #06211b; --next: #f0a74a; --next-soft: #3a2a12; --bad: #ff7b72; --bad-soft: #3d1c1a;
+    --ok: #5bd38a; --ok-soft: #173321; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.45;
+    -webkit-text-size-adjust: 100%; overscroll-behavior-y: contain;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .top {
+    position: sticky; top: 0; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+    display: flex; align-items: center; gap: 8px; height: calc(54px + env(safe-area-inset-top, 0px));
+  }
+  .brand { font-weight: 700; font-size: 18px; letter-spacing: -.01em; white-space: nowrap; }
+  .tabs { display: flex; gap: 2px; margin-left: auto; background: var(--soft); border-radius: 10px; padding: 3px; }
+  .tabs button { border: 0; background: transparent; padding: 7px 12px; border-radius: 8px; font-weight: 500; color: var(--muted); min-height: 36px; }
+  .tabs button.active { background: var(--panel); color: var(--fg); box-shadow: var(--shadow); font-weight: 700; }
+  .tabs button .cnt { font-variant-numeric: tabular-nums; margin-left: 3px; color: var(--accent); }
+  .iconbtn { border: 0; background: transparent; font-size: 22px; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--muted); }
+
+  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 40px; max-width: 720px; margin: 0 auto; }
+  .view { display: flex; flex-direction: column; gap: 14px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  h2 { font-size: 17px; font-weight: 700; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  .bigbtn {
+    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 60px; padding: 12px 16px;
+    border-radius: 14px; border: 0; background: var(--accent); color: var(--accent-fg); font-size: 18px; font-weight: 700; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .bigbtn.secondary { background: var(--panel); color: var(--fg); border: 1.5px solid var(--line); font-weight: 500; font-size: 16px; }
+  .bigbtn.next { background: var(--next); color: #fff; }
+  .bigbtn:disabled { opacity: .55; cursor: default; }
+  .bigbtn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+  .btn { min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); color: var(--fg); font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; }
+  .btn.danger { color: var(--bad); border-color: var(--bad); }
+  .btn.sm { min-height: 36px; padding: 4px 10px; font-size: 14px; }
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btnrow .btn { flex: 1 1 auto; }
+
+  .seg { display: flex; gap: 0; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { flex: 1; min-height: 44px; border: 0; background: var(--panel); color: var(--muted); font-weight: 500; padding: 6px 4px; font-size: 14px; }
+  .seg button + button { border-left: 1.5px solid var(--line); }
+  .seg button.active { background: var(--soft); color: var(--fg); font-weight: 700; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .field input, .field select, .field textarea { min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); width: 100%; }
+  .field textarea { min-height: 140px; line-height: 1.5; }
+  .inline { display: flex; gap: 8px; align-items: center; }
+  .inline > * { min-width: 0; }
+  .inline input { flex: 1; }
+
+  .progress { display: flex; flex-direction: column; gap: 8px; }
+  .bar { height: 10px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+  /* 목록 행 */
+  .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .row { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .row.fail { border-color: var(--bad); }
+  .row.ok { border-left: 4px solid var(--ok); }
+  .row .stripbox { overflow-x: auto; border-radius: 6px; background: #fff; border: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+  .row .strip { display: block; height: 40px; width: auto; max-width: none; }
+  .row .addr { min-height: 46px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); width: 100%; font-size: 16px; }
+  .row .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 99px; font-size: 12.5px; font-weight: 700; background: var(--soft); color: var(--muted); }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip.bad { background: var(--bad-soft); color: var(--bad); }
+  .chip.next { background: var(--next-soft); color: var(--next); }
+  .row .found { color: var(--muted); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+  .row .actions { margin-left: auto; display: flex; gap: 6px; }
+
+  /* 코스 */
+  #map { width: 100%; height: 46vh; min-height: 260px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--soft); overflow: hidden; position: relative; }
+  #mapMsg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--muted); font-size: 14px; }
+  .pin { width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--accent); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); display: grid; place-items: center; position: relative; top: -6px; left: 0; }
+  .pin > b { transform: rotate(45deg); color: #fff; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .pin.done { background: #9aa6a1; }
+  .pin.next { background: var(--next); }
+  .pin.start { background: #334; border-radius: 50%; transform: none; top: 0; }
+  .pin.start > b { transform: none; font-size: 11px; }
+  .stop { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; }
+  .stop.next { border-color: var(--next); background: var(--next-soft); }
+  .stop.done { opacity: .6; }
+  .stop.done .txt { text-decoration: line-through; }
+  .stop .badge { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stop.done .badge { background: #9aa6a1; color: #fff; }
+  .stop.next .badge { background: var(--next); color: #fff; }
+  .stop .txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .stop .txt .t1 { font-weight: 700; overflow-wrap: anywhere; }
+  .stop .txt .t2 { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .stop .ctl { display: flex; flex-direction: column; gap: 6px; }
+  .stop .ctl .btn { min-height: 38px; padding: 4px 10px; font-size: 14px; }
+  .nextcard { border-color: var(--next); background: var(--next-soft); }
+  .summary { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+  .summary b { color: var(--fg); font-variant-numeric: tabular-nums; }
+
+  /* 시트/모달 */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+  .sheet { background: var(--panel); width: 100%; max-width: 720px; border-radius: 18px 18px 0 0; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; max-height: 88vh; overflow: auto; }
+  .sheet h3 { font-size: 16px; }
+  .navgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .navgrid .btn { min-height: 54px; font-weight: 700; font-size: 16px; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: #15201d; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 60; max-width: 90vw; box-shadow: var(--shadow); }
+  details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--soft); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (min-width: 600px) { .navgrid { grid-template-columns: 1fr 1fr 1fr; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand" id="brand">스캔코스</div>
+  <nav class="tabs" aria-label="화면">
+    <button type="button" data-view="scan" class="active">스캔</button>
+    <button type="button" data-view="review">목록<span class="cnt" id="cntReview"></span></button>
+    <button type="button" data-view="course">코스<span class="cnt" id="cntCourse"></span></button>
+  </nav>
+  <button type="button" class="iconbtn" id="btnSettings" aria-label="설정">⚙</button>
+</header>
+
+<main>
+  <!-- 스캔 -->
+  <section class="view" id="view-scan">
+    <div class="card" id="resumeCard" hidden>
+      <h2>진행 중인 코스</h2>
+      <p class="muted" id="resumeText"></p>
+      <div class="btnrow">
+        <button type="button" class="btn primary" id="btnResume">코스 열기</button>
+        <button type="button" class="btn" id="btnResumeList">목록 보기</button>
+      </div>
+    </div>
+
+    <label class="bigbtn" id="lblCamera">
+      <input type="file" id="fileCamera" accept="image/*" capture="environment">
+      📷 사진 찍어서 스캔
+    </label>
+    <label class="bigbtn secondary" id="lblGallery">
+      <input type="file" id="fileGallery" accept="image/*" multiple>
+      🖼 앨범에서 고르기 (여러 장 가능)
+    </label>
+    <button type="button" class="bigbtn secondary" id="btnManual">✏️ 주소 직접 입력 · 붙여넣기</button>
+
+    <div class="card progress" id="ocrProgress" hidden>
+      <div class="inline"><b id="ocrStatus">준비 중</b><span class="muted small num" id="ocrPct" style="margin-left:auto">0%</span></div>
+      <div class="bar"><i id="ocrBar"></i></div>
+      <p class="muted small">사진 한 장에 10~30초쯤 걸립니다. 화면을 끄지 마세요.</p>
+      <button type="button" class="btn danger sm" id="btnCancelOcr">취소</button>
+    </div>
+
+    <div class="card" id="manualCard" hidden>
+      <h2>주소 직접 입력</h2>
+      <p class="muted small">한 줄에 주소 하나. 갤럭시 '텍스트 추출'이나 아이폰 '라이브 텍스트'로 복사한 내용을 붙여넣어도 됩니다.</p>
+      <div class="field"><textarea id="manualText" placeholder="경기 포천시 소흘읍 호국로 489&#10;포천시 선단동 827&#10;..."></textarea></div>
+      <div class="btnrow">
+        <button type="button" class="btn primary" id="btnManualAdd">목록에 추가</button>
+        <button type="button" class="btn" id="btnManualClose">닫기</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>잘 찍는 요령</h2>
+      <p class="muted small">종이를 평평하게 놓고, 그림자 없이, 글자가 화면에 가득 차게. 흔들리면 다시 찍는 게 빠릅니다. 인식이 틀린 줄은 목록 화면에서 바로 고칠 수 있습니다.</p>
+    </div>
+  </section>
+
+  <!-- 목록(검토) -->
+  <section class="view" id="view-review" hidden>
+    <div class="card">
+      <div class="inline">
+        <h2 id="reviewTitle">주소 목록</h2>
+        <span class="muted small" id="reviewStat" style="margin-left:auto"></span>
+      </div>
+      <div class="field">
+        <label>출발지</label>
+        <div class="seg" id="startSeg">
+          <button type="button" data-start="gps">현재 위치</button>
+          <button type="button" data-start="home">기본 출발지</button>
+          <button type="button" data-start="first">첫 번째 주소</button>
+        </div>
+        <p class="muted small" id="startHint"></p>
+      </div>
+      <button type="button" class="bigbtn" id="btnBuild">지도에 올리고 순서 만들기</button>
+    </div>
+
+    <ul class="rows" id="rows"></ul>
+
+    <div class="btnrow">
+      <button type="button" class="btn" id="btnAddRow">＋ 줄 추가</button>
+      <button type="button" class="btn" id="btnScanMore">📷 더 스캔</button>
+      <button type="button" class="btn danger" id="btnClearRows">전체 삭제</button>
+    </div>
+
+    <details id="excludedBox" hidden>
+      <summary><span id="excludedCount"></span>줄은 주소로 안 보여서 뺐습니다 (펼쳐서 확인)</summary>
+      <ul class="rows" id="excludedRows" style="margin-top:10px"></ul>
+    </details>
+  </section>
+
+  <!-- 코스 -->
+  <section class="view" id="view-course" hidden>
+    <div class="card nextcard" id="nextCard" hidden>
+      <div class="inline"><span class="chip next">다음</span><b id="nextTitle"></b></div>
+      <p class="muted" id="nextAddr"></p>
+      <button type="button" class="bigbtn next" id="btnNextNav">내비 시작</button>
+    </div>
+    <div class="card" id="allDoneCard" hidden>
+      <h2>오늘 코스 끝</h2>
+      <p class="muted">전부 완료 표시됐습니다. 수고하셨습니다.</p>
+    </div>
+
+    <div id="map"><div id="mapMsg">지도를 준비하는 중…</div></div>
+
+    <div class="summary" id="courseSummary"></div>
+    <ul class="rows" id="stops"></ul>
+
+    <div class="btnrow">
+      <button type="button" class="btn" id="btnReorder">순서 다시 계산</button>
+      <button type="button" class="btn" id="btnShare">코스 링크 복사</button>
+      <button type="button" class="btn danger" id="btnNewCourse">새 코스 시작</button>
+    </div>
+  </section>
+
+  <!-- 설정 -->
+  <section class="view" id="view-settings" hidden>
+    <div class="card">
+      <h2>설정</h2>
+      <div class="field">
+        <label>기본 출발지 주소 (예: 회사)</label>
+        <div class="inline"><input type="text" id="setHome" placeholder="경기 포천시 ..."><button type="button" class="btn" id="btnHomeFind">찾기</button></div>
+        <p class="muted small" id="homeFound"></p>
+      </div>
+      <div class="field">
+        <label>기본 지역 (주소에 시/군이 없을 때 앞에 붙임)</label>
+        <input type="text" id="setRegion" placeholder="경기 포천시">
+      </div>
+      <div class="field">
+        <label>기본 내비 앱 ('내비 시작' 버튼이 여는 앱)</label>
+        <select id="setNav">
+          <option value="kakaonavi">카카오내비</option>
+          <option value="kakaomap">카카오맵</option>
+          <option value="tmap">티맵</option>
+          <option value="naver">네이버지도</option>
+        </select>
+      </div>
+      <label class="inline" style="min-height:44px"><input type="checkbox" id="setRoad" style="width:22px;height:22px"> 도로 기준으로 순서 계산 (끄면 직선거리)</label>
+      <div class="btnrow"><button type="button" class="btn primary" id="btnSaveSettings">저장</button><button type="button" class="btn" id="btnCloseSettings">닫기</button></div>
+    </div>
+    <div class="card">
+      <h2>지도 키</h2>
+      <div class="kv">
+        <span class="muted">상태</span><span id="keyStatus">확인 중</span>
+        <span class="muted">등록 도메인</span><code id="originCode"></code>
+      </div>
+      <div class="field">
+        <label>카카오 JavaScript 키 (config.js에 넣으면 전원 공통, 여기 넣으면 이 폰만)</label>
+        <input type="text" id="setKey" placeholder="config.js 값 사용 중" autocomplete="off">
+      </div>
+    </div>
+    <div class="card">
+      <h2>지명 사전</h2>
+      <p class="muted small">주소를 찾을 때마다 동·리·도로명을 익혀 두고, 다음 스캔에서 비슷한 오타를 자동으로 고칩니다.</p>
+      <div class="inline"><span class="muted small">익힌 지명 <b class="num" id="dictCount">0</b>개</span><button type="button" class="btn sm" id="btnDictReset" style="margin-left:auto">기본값으로 되돌리기</button></div>
+    </div>
+    <p class="muted small" id="versionText"></p>
+  </section>
+</main>
+
+<div class="scrim" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="inline"><span class="chip" id="sheetNo">1</span><h3 id="sheetTitle" style="min-width:0;overflow-wrap:anywhere"></h3></div>
+    <p class="muted" id="sheetAddr" style="overflow-wrap:anywhere"></p>
+    <div class="navgrid">
+      <button type="button" class="btn primary" data-nav="kakaonavi">카카오내비</button>
+      <button type="button" class="btn" data-nav="kakaomap">카카오맵</button>
+      <button type="button" class="btn" data-nav="tmap">티맵</button>
+      <button type="button" class="btn" data-nav="naver">네이버지도</button>
+      <button type="button" class="btn" data-nav="copy">주소 복사</button>
+      <button type="button" class="btn" id="sheetDone">완료 표시</button>
+    </div>
+    <button type="button" class="btn" id="sheetClose">닫기</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="tess/tesseract.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
