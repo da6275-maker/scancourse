@@ -170,6 +170,12 @@
   details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--soft); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+  .board { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .board summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; color: var(--fg); }
+  .board summary::-webkit-details-marker { display: none; }
+  .board summary::after { content: '▾'; margin-left: auto; color: var(--muted); }
+  .board[open] summary::after { content: '▴'; }
+  .board iframe { width: 100%; height: 560px; border: 0; border-radius: 10px; background: #fff; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   @media (min-width: 600px) { .navgrid { grid-template-columns: 1fr 1fr 1fr; } }
 </style>
@@ -294,6 +300,17 @@
     </div>
   </section>
 
+  <!-- 익명 건의함 (config.js에 설문 주소를 넣으면 보임) -->
+  <details class="board" id="board" hidden>
+    <summary><span id="boardTitle">익명 건의함</span><span class="muted small" style="font-weight:400">탭해서 열기</span></summary>
+    <div class="card" style="margin-top:10px">
+      <p class="muted small" id="boardNote"></p>
+      <div class="field" id="boardField"><textarea id="boardText" rows="4" placeholder="하고 싶은 말을 적어 주세요" style="min-height:110px"></textarea></div>
+      <div class="btnrow" id="boardBtns"><button type="button" class="btn primary" id="btnBoardSend">보내기</button></div>
+      <div id="boardFrame" hidden></div>
+    </div>
+  </details>
+
   <!-- 설정 -->
   <section class="view" id="view-settings" hidden>
     <div class="card">
@@ -357,9 +374,9 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=1.0.3"></script>
-<script src="core.js?v=1.0.3"></script>
+<script src="config.js?v=1.0.4"></script>
+<script src="core.js?v=1.0.4"></script>
 <script src="tess/tesseract.min.js"></script>
-<script src="app.js?v=1.0.3"></script>
+<script src="app.js?v=1.0.4"></script>
 </body>
 </html>

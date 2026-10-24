@@ -15,6 +15,12 @@ window.APP_CONFIG = {
   // 도로 기준으로 순서 계산 (공개 경로 서버 사용, 실패하면 직선거리로 계산)
   ROAD_ORDER: true,
 
+  // 익명 건의함: 구글 설문(폼)으로 보냅니다. 응답은 설문 주인만 봅니다. 비워 두면 건의함이 안 보입니다.
+  BOARD_FORM_URL: '',      // 예: https://docs.google.com/forms/d/e/1FAIpQL.../viewform
+  BOARD_ENTRY_ID: '',      // 설문 질문 번호(entry.뒤 숫자). 비우면 설문 화면을 그대로 끼워 넣음
+  BOARD_TITLE: '익명 건의함',
+  BOARD_NOTE: '누가 보냈는지 남지 않습니다. 관리자 한 사람만 읽습니다.',
+
   APP_NAME: '스캔코스',
-  VERSION: '1.0.3'
+  VERSION: '1.0.4'
 };

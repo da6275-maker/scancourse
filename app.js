@@ -53,10 +53,11 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   const VIEWS = ['scan', 'review', 'course', 'settings'];
-  let currentView = 'scan';
+  let currentView = 'scan'; let boardEnabled = false;
   function showView(name) {
     currentView = name;
     for (const v of VIEWS) $('view-' + v).hidden = v !== name;
+    const board = $('board'); if (board) board.hidden = !boardEnabled || name === 'settings';
     document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
     window.scrollTo(0, 0);
     if (name === 'course') { renderCourse(); setTimeout(() => { if (map) map.relayout(); fitMap(); }, 50); }
@@ -775,10 +776,48 @@
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => { /* 설치 기능만 빠짐 */ }); }
   }
 
+  // ---------- 익명 건의함 ----------
+  function boardBase() { return (CFG.BOARD_FORM_URL || '').trim().replace(/[?#].*$/, '').replace(/\/(viewform|formResponse)$/, '').replace(/\/$/, ''); }
+  function setupBoard() {
+    const box = $('board'); if (!box) return;
+    const base = boardBase(); if (!base) return;
+    boardEnabled = true;
+    $('boardTitle').textContent = CFG.BOARD_TITLE || '익명 건의함';
+    $('boardNote').textContent = CFG.BOARD_NOTE || '';
+    const entry = String(CFG.BOARD_ENTRY_ID || '').replace(/\D/g, '');
+    if (entry) {
+      on('btnBoardSend', 'click', () => sendBoard(entry));
+    } else {
+      $('boardField').hidden = true; $('boardBtns').hidden = true; $('boardFrame').hidden = false;
+      box.addEventListener('toggle', () => {
+        if (!box.open || $('boardFrame').firstChild) return;
+        const f = document.createElement('iframe'); f.src = base + '/viewform?embedded=true'; f.title = CFG.BOARD_TITLE || '익명 건의함'; f.loading = 'lazy';
+        $('boardFrame').appendChild(f);
+      });
+    }
+    try { const draft = localStorage.getItem('sc.board.draft'); if (draft) $('boardText').value = draft; } catch (e) { /* 무시 */ }
+    on('boardText', 'input', () => { try { localStorage.setItem('sc.board.draft', $('boardText').value); } catch (e) { /* 무시 */ } });
+  }
+  async function sendBoard(entry) {
+    const ta = $('boardText'); const text = ta.value.trim();
+    if (text.length < 2) { toast('내용을 적어 주세요'); return; }
+    const btn = $('btnBoardSend'); btn.disabled = true; btn.textContent = '보내는 중…';
+    try {
+      const body = new URLSearchParams();
+      body.append('entry.' + entry, text); body.append('fvv', '1'); body.append('pageHistory', '0');
+      await fetch(boardBase() + '/formResponse', { method: 'POST', mode: 'no-cors', body });
+      ta.value = ''; try { localStorage.removeItem('sc.board.draft'); } catch (e) { /* 무시 */ }
+      $('board').open = false; toast('보냈습니다. 고맙습니다.', 3000);
+    } catch (e) {
+      toast('전송이 안 됐습니다. 인터넷 연결을 확인하고 다시 눌러 주세요. (쓴 글은 남아 있습니다)', 4500);
+    } finally { btn.disabled = false; btn.textContent = '보내기'; }
+  }
+
   function init() {
     $('brand').textContent = CFG.APP_NAME || '스캔코스'; document.title = CFG.APP_NAME || '스캔코스';
     bind();
     setupInstall();
+    setupBoard();
     const imported = importFromHash();
     updateCounts();
     if (kakaoKey()) ensureKakao().catch(() => { /* 상태 표시로 알림 */ });

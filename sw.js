@@ -1,8 +1,8 @@
 /* sw.js — 앱 설치용 서비스 워커. 온라인이면 항상 새 파일을 쓰고, 오프라인일 때만 저장본을 씀. */
-const VERSION = 'scancourse-1.0.3';
+const VERSION = 'scancourse-1.0.4';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
-  './config.js?v=1.0.3', './core.js?v=1.0.3', './app.js?v=1.0.3', './tess/tesseract.min.js',
+  './config.js?v=1.0.4', './core.js?v=1.0.4', './app.js?v=1.0.4', './tess/tesseract.min.js',
 ];
 
 self.addEventListener('install', (e) => {
